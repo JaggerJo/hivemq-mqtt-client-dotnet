@@ -16,6 +16,7 @@
 namespace HiveMQtt.Client;
 
 using System;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 
 using HiveMQtt.Client.Exceptions;
@@ -45,7 +46,7 @@ public interface IHiveMQClient : IDisposable
     /// <summary>
     /// Gets the list of subscriptions for this client.
     /// </summary>
-    List<Subscription> Subscriptions { get; }
+    ImmutableArray<Subscription> Subscriptions { get; }
 
     /// <summary>
     /// Indicates if the client is currently connected to the MQTT broker.

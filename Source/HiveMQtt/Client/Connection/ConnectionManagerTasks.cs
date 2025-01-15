@@ -77,7 +77,7 @@ public partial class ConnectionManager
                     Logger.Debug($"{this.Client.Options.ClientId}-(CM)- OutgoingPublishQueue:....{this.OutgoingPublishQueue.Count}");
                     Logger.Debug($"{this.Client.Options.ClientId}-(CM)- OPubTransactionQueue:....{this.OPubTransactionQueue.Count}/{this.OPubTransactionQueue.Capacity}");
                     Logger.Debug($"{this.Client.Options.ClientId}-(CM)- IPubTransactionQueue:....{this.IPubTransactionQueue.Count}/{this.IPubTransactionQueue.Capacity}");
-                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- # of Subscriptions:......{this.Client.Subscriptions.Count}");
+                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- # of Subscriptions:......{this.Client.Subscriptions.Length}");
                     Logger.Debug($"{this.Client.Options.ClientId}-(CM)- PacketIDsInUse:..........{this.PacketIDManager.Count}");
 
                     // Background Tasks Health Check

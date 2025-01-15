@@ -17,6 +17,7 @@
 namespace HiveMQtt.Client;
 
 using System;
+using System.Collections.Immutable;
 using System.Text;
 using System.Threading.Tasks;
 using HiveMQtt.Client.Connection;
@@ -36,6 +37,8 @@ using HiveMQtt.MQTT5.Types;
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+    private readonly List<Subscription> _subscriptions = [];
+    private readonly object _subscriptionsLock = new();
 
     internal ConnectionManager Connection { get; set; }
 
@@ -64,7 +67,16 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     public HiveMQClientOptions Options { get; set; }
 
     /// <inheritdoc />
-    public List<Subscription> Subscriptions { get; } = new();
+    public ImmutableArray<Subscription> Subscriptions
+    {
+        get
+        {
+            lock (this._subscriptionsLock)
+            {
+                return this._subscriptions.ToImmutableArray();
+            }
+        }
+    }
 
     /// <inheritdoc />
     public bool IsConnected() => this.Connection.State == ConnectState.Connected;
@@ -356,7 +368,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 }
             }
 
-            this.Subscriptions.Add(subscription);
+            lock (this._subscriptionsLock)
+            {
+                this._subscriptions.Add(subscription);
+            }
         }
 
         // Fire the corresponding event
@@ -384,9 +399,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<UnsubscribeResult> UnsubscribeAsync(Subscription subscription)
     {
-        if (!this.Subscriptions.Contains(subscription))
+        lock (this._subscriptionsLock)
         {
-            throw new HiveMQttClientException("No such subscription found.  Make sure to take subscription(s) from HiveMQClient.Subscriptions[] or HiveMQClient.GetSubscriptionByTopic().");
+            if (!this._subscriptions.Contains(subscription))
+            {
+                throw new HiveMQttClientException("No such subscription found.  Make sure to take subscription(s) from HiveMQClient.Subscriptions[] or HiveMQClient.GetSubscriptionByTopic().");
+            }
         }
 
         var unsubOptions = new UnsubscribeOptionsBuilder()
@@ -399,9 +417,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<UnsubscribeResult> UnsubscribeAsync(List<Subscription> subscriptions)
     {
+        var subscriptionsCopy = this.Subscriptions;
+
         for (var i = 0; i < subscriptions.Count; i++)
         {
-            if (!this.Subscriptions.Contains(subscriptions[i]))
+            if (!subscriptionsCopy.Contains(subscriptions[i]))
             {
                 throw new HiveMQttClientException("No such subscription found.  Make sure to take subscription(s) from HiveMQClient.Subscriptions[] or HiveMQClient.GetSubscriptionByTopic().");
             }
@@ -464,7 +484,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             if (reasonCode == UnsubAckReasonCode.Success)
             {
                 // Remove the subscription from the client
-                this.Subscriptions.Remove(unsubscribeResult.Subscriptions[counter]);
+                lock (this._subscriptionsLock)
+                {
+                    this._subscriptions.Remove(unsubscribeResult.Subscriptions[counter]);
+                }
             }
         }
 
