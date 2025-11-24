@@ -84,7 +84,8 @@ Task("CountLines")
     .Description("Counts the total lines of C# code in the Source folder.")
     .Does(() =>
     {
-        var csFiles = GetFiles("./Source/**/*.cs");
+        var csFiles = GetFiles("./Source/**/*.cs")
+            .Where(f => !f.FullPath.Contains("/bin/") && !f.FullPath.Contains("/obj/"));
         var totalLines = 0;
         var fileCount = 0;
         
