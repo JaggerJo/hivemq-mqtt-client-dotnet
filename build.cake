@@ -80,6 +80,29 @@ Task("Pack")
             });
     });
 
+Task("CountLines")
+    .Description("Counts the total lines of C# code in the Source folder.")
+    .Does(() =>
+    {
+        var csFiles = GetFiles("./Source/**/*.cs");
+        var totalLines = 0;
+        var fileCount = 0;
+        
+        foreach(var file in csFiles)
+        {
+            var lines = System.IO.File.ReadAllLines(file.FullPath);
+            totalLines += lines.Length;
+            fileCount++;
+        }
+        
+        Information("===========================================");
+        Information("C# Code Statistics for Source Folder");
+        Information("===========================================");
+        Information($"Total C# Files: {fileCount}");
+        Information($"Total Lines of Code: {totalLines}");
+        Information("===========================================");
+    });
+
 Task("Default")
     .Description("Cleans, restores NuGet packages, builds the solution, runs unit tests and then creates NuGet packages.")
     .IsDependentOn("Build")
